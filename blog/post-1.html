@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>用 Python 开发命令行待办事项管理器 — 周家乐</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <nav class="nav">
+    <div class="container">
+      <a href="index.html" class="logo">周家乐</a>
+      <ul class="nav-links">
+        <li><a href="index.html">首页</a></li>
+        <li><a href="blog.html" class="active">博客</a></li>
+        <li><a href="about.html">关于</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <article class="post-detail">
+    <div class="container">
+      <header class="post-header">
+        <div class="post-meta">
+          <span class="tag">Python</span>
+          <span class="tag">CLI</span>
+          <time>2026-06-23</time>
+        </div>
+        <h1>用 Python 开发命令行待办事项管理器</h1>
+        <p class="post-intro">从零实现一个支持增删改查、JSON 持久化、日期排序的 CLI 工具</p>
+      </header>
+
+      <div class="post-content">
+        <h2>项目背景</h2>
+        <p>这是我的 Python 课程作业，要求开发一个命令行待办事项管理器。项目需要实现核心 CRUD 功能、JSON 持久化存储、截止日期自动排序，并做好异常处理与代码规范。</p>
+
+        <h2>功能实现</h2>
+
+        <h3>1. 核心功能</h3>
+        <ul>
+          <li><strong>新增待办</strong>：输入标题（必填）、描述、截止日期（YYYY-MM-DD 格式）</li>
+          <li><strong>查看待办</strong>：支持全部 / 未完成 / 已完成三种筛选，按截止日期升序排列</li>
+          <li><strong>修改待办</strong>：按 ID 选中后可修改任意字段，直接回车保留原值</li>
+          <li><strong>删除待办</strong>：按 ID 选中并二次确认后删除</li>
+        </ul>
+
+        <h3>2. JSON 持久化</h3>
+        <p>程序启动时从 <code>todos.json</code> 加载数据，每次操作后实时保存，关闭程序数据不丢失。数据结构示例：</p>
+        <pre><code>[
+  {
+    "id": 1,
+    "title": "完成作业",
+    "description": "Python 命令行项目",
+    "due_date": "2026-06-30",
+    "done": false
+  }
+]</code></pre>
+
+        <h3>3. 截止日期排序</h3>
+        <p>使用 <code>sorted()</code> 函数配合 <code>lambda</code>，按 <code>due_date</code> 字段升序排列，保证紧急任务优先显示。</p>
+
+        <h3>4. 异常处理</h3>
+        <ul>
+          <li>日期格式不合法时循环提示重新输入</li>
+          <li>标题为空时拒绝新增</li>
+          <li>输入非数字 ID 或不存在的 ID 时给出提示</li>
+          <li>随时可按 <code>Ctrl+C</code> 取消当前操作回到主菜单</li>
+        </ul>
+
+        <h2>代码结构</h2>
+        <p>全部功能拆分为独立函数，结构清晰：</p>
+        <ul>
+          <li><code>load_todos() / save_todos()</code> — JSON 读写</li>
+          <li><code>add_todo() / list_todos() / edit_todo() / delete_todo()</code> — 四个核心操作</li>
+          <li><code>input_date()</code> — 日期校验循环</li>
+          <li><code>find_by_id() / require()</code> — 统一的 ID 查找与非空校验</li>
+          <li><code>sorted_by_date()</code> — 截止日期排序</li>
+          <li><code>main()</code> — 菜单循环</li>
+        </ul>
+
+        <h2>运行效果</h2>
+        <p>运行 <code>python todo.py</code> 后进入主菜单：</p>
+        <pre><code>╔══════════════════════════════╗
+║      个人待办事项管理器       ║
+╠══════════════════════════════╣
+║  1. 新增待办                 ║
+║  2. 查看待办                 ║
+║  3. 修改待办                 ║
+║  4. 删除待办                 ║
+║  0. 退出                     ║
+╚══════════════════════════════╝</code></pre>
+
+        <h2>AI 使用反思</h2>
+        <p>本项目借助 AI（Claude）生成了初版代码框架。有帮助的地方：</p>
+        <ul>
+          <li>快速生成函数拆分方案，节省了搭骨架的时间</li>
+          <li>异常处理覆盖更全面，提醒了边界情况</li>
+        </ul>
+        <p>需要批判性使用的地方：</p>
+        <ul>
+          <li>AI 注释有时描述"是什么"而非"为什么"，需要清理</li>
+          <li>AI 倾向于加入过多防御性代码，需结合实际需求取舍</li>
+          <li>代码逻辑仍需自己逐行理解，不能盲目复制粘贴</li>
+        </ul>
+        <p><strong>结论：</strong>AI 是加速器，不是替代品。它适合生成骨架，但代码的正确性、合理性、风格一致性仍需开发者自己把关。</p>
+
+        <h2>项目地址</h2>
+        <p>完整代码已上传 GitHub：<a href="https://github.com/SEVE322/cetraining-2026-zhoujiale-2450411106" target="_blank">cetraining-2026-zhoujiale-2450411106</a></p>
+      </div>
+
+      <footer class="post-footer-nav">
+        <a href="blog.html" class="back-link">← 返回博客列表</a>
+      </footer>
+    </div>
+  </article>
+
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; 2026 周家乐 · 24级计算机科学与技术一班 · 2450411106</p>
+    </div>
+  </footer>
+</body>
+</html>
