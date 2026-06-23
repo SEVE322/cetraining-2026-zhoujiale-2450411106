@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人待办事项管理器 — 周家乐</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:   #3b82f6;
+      --dark:   #1e293b;
+      --mid:    #475569;
+      --light:  #f8fafc;
+      --border: #e2e8f0;
+      --green:  #22c55e;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      line-height: 1.7;
+    }
+
+    /* ── Hero ── */
+    header {
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 60%, #60a5fa 100%);
+      color: #fff;
+      padding: 60px 24px 48px;
+      text-align: center;
+    }
+    header h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; letter-spacing: .02em; }
+    header p.sub { margin-top: 10px; font-size: 1.05rem; opacity: .88; }
+    .badge-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .badge {
+      background: rgba(255,255,255,.18);
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: .85rem;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .card h2 {
+      font-size: 1.2rem;
+      color: var(--blue);
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2::before {
+      content: attr(data-icon);
+      font-size: 1.1rem;
+    }
+
+    /* ── Student info ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .info-item {
+      background: var(--light);
+      border-radius: 8px;
+      padding: 14px 18px;
+    }
+    .info-item .label { font-size: .75rem; color: var(--mid); text-transform: uppercase; letter-spacing: .06em; }
+    .info-item .value { font-size: 1rem; font-weight: 600; margin-top: 4px; }
+
+    /* ── Feature table ── */
+    table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+    th {
+      background: var(--blue);
+      color: #fff;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    th:first-child { border-radius: 8px 0 0 0; }
+    th:last-child  { border-radius: 0 8px 0 0; }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background: #f9fafb; }
+    .tag {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 4px;
+      padding: 1px 8px;
+      font-size: .8rem;
+      font-weight: 600;
+    }
+
+    /* ── Error list ── */
+    .err-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .err-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #fef9c3;
+      border-left: 3px solid #eab308;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: .92rem;
+    }
+    .err-list li::before { content: "⚠"; flex-shrink: 0; }
+
+    /* ── Code block ── */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 20px;
+      font-size: .88rem;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    pre .key   { color: #93c5fd; }
+    pre .str   { color: #86efac; }
+    pre .num   { color: #fde68a; }
+    pre .bool  { color: #f9a8d4; }
+    pre .cmd   { color: #34d399; }
+    .run-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 14px 20px;
+    }
+    .run-box .prompt { color: #4ade80; font-weight: 700; font-family: monospace; }
+    .run-box .cmd-text { color: #e2e8f0; font-family: monospace; font-size: .95rem; }
+
+    /* ── AI reflection ── */
+    .ai-section { display: flex; flex-direction: column; gap: 16px; }
+    .ai-block {
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+    .ai-block.good   { background: #f0fdf4; border-left: 4px solid var(--green); }
+    .ai-block.caution{ background: #fffbeb; border-left: 4px solid #f59e0b; }
+    .ai-block.concl  { background: #eff6ff; border-left: 4px solid var(--blue); }
+    .ai-block h3 { font-size: .9rem; font-weight: 700; margin-bottom: 8px; }
+    .ai-block ul { padding-left: 18px; font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
+    .ai-block p  { font-size: .9rem; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: .82rem;
+      color: var(--mid);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>个人待办事项管理器</h1>
+  <p class="sub">基于 Python 命令行 · JSON 持久化 · 截止日期自动排序</p>
+  <div class="badge-row">
+    <span class="badge">Python 3.7+</span>
+    <span class="badge">零外部依赖</span>
+    <span class="badge">标准库</span>
+    <span class="badge">课程作业</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- 学生信息 -->
+  <div class="card">
+    <h2 data-icon="🎓">学生信息</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">姓名</div>
+        <div class="value">周家乐</div>
+      </div>
+      <div class="info-item">
+        <div class="label">班级</div>
+        <div class="value">24级计算机科学与技术一班</div>
+      </div>
+      <div class="info-item">
+        <div class="label">学号</div>
+        <div class="value">2450411106</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 项目简介 -->
+  <div class="card">
+    <h2 data-icon="📋">项目简介</h2>
+    <p>一个基于 Python 命令行的待办事项管理工具，支持<strong>增删改查</strong>、<strong>JSON 持久化</strong>与<strong>截止日期自动排序</strong>。全部功能拆分为独立函数，完善异常捕获，代码整洁易读。</p>
+  </div>
+
+  <!-- 快速开始 -->
+  <div class="card">
+    <h2 data-icon="🚀">快速开始</h2>
+    <p style="margin-bottom:14px;">无需安装任何第三方库，确保 Python 3.7+ 后直接运行：</p>
+    <div class="run-box">
+      <span class="prompt">$</span>
+      <span class="cmd-text">python todo.py</span>
+    </div>
+    <p style="margin-top:14px;font-size:.9rem;color:var(--mid);">程序启动后进入主菜单，数据自动保存在同目录的 <code>todos.json</code> 中，关闭程序后数据不会丢失。</p>
+  </div>
+
+  <!-- 功能说明 -->
+  <div class="card">
+    <h2 data-icon="⚙️">功能说明</h2>
+    <table>
+      <thead>
+        <tr><th>选项</th><th>功能</th><th>说明</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag">1</span></td>
+          <td>新增待办</td>
+          <td>输入标题（必填）、描述、截止日期（YYYY-MM-DD），自动标记为未完成</td>
+        </tr>
+        <tr>
+          <td><span class="tag">2</span></td>
+          <td>查看待办</td>
+          <td>支持三种筛选：全部 / 只看未完成 / 只看已完成，结果按截止日期升序排列</td>
+        </tr>
+        <tr>
+          <td><span class="tag">3</span></td>
+          <td>修改待办</td>
+          <td>按 ID 选中后可修改任意字段，直接回车保留原值，支持切换完成状态</td>
+        </tr>
+        <tr>
+          <td><span class="tag">4</span></td>
+          <td>删除待办</td>
+          <td>按 ID 选中并二次确认后删除，防止误操作</td>
+        </tr>
+        <tr>
+          <td><span class="tag">0</span></td>
+          <td>退出</td>
+          <td>退出程序（数据已实时保存，不会丢失）</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:24px;margin-bottom:12px;font-size:.95rem;">异常处理覆盖范围</h3>
+    <ul class="err-list">
+      <li>日期格式不合法时循环提示重新输入</li>
+      <li>标题为空时拒绝新增</li>
+      <li>输入非数字 ID 时给出友好提示</li>
+      <li>删除或修改不存在的 ID 时给出提示</li>
+      <li>随时可按 Ctrl+C 取消当前操作回到主菜单</li>
+    </ul>
+  </div>
+
+  <!-- 数据格式 -->
+  <div class="card">
+    <h2 data-icon="💾">数据格式（todos.json）</h2>
+    <pre>[
+  {
+    <span class="key">"id"</span>:          <span class="num">1</span>,
+    <span class="key">"title"</span>:       <span class="str">"完成作业"</span>,
+    <span class="key">"description"</span>: <span class="str">"Python 命令行项目"</span>,
+    <span class="key">"due_date"</span>:    <span class="str">"2026-06-30"</span>,
+    <span class="key">"done"</span>:        <span class="bool">false</span>
+  }
+]</pre>
+  </div>
+
+  <!-- AI 使用反思 -->
+  <div class="card">
+    <h2 data-icon="🤖">AI 使用反思</h2>
+    <p style="margin-bottom:16px;font-size:.9rem;">本项目在开发过程中借助 AI（Claude）辅助生成了初版代码框架与结构设计。</p>
+    <div class="ai-section">
+      <div class="ai-block good">
+        <h3>有帮助的部分</h3>
+        <ul>
+          <li>快速生成函数拆分方案，让我直接思考设计合理性而非从零搭骨架</li>
+          <li>异常处理覆盖场景更全面，提醒了"删除不存在 ID""输入非数字 ID"等边界情况</li>
+        </ul>
+      </div>
+      <div class="ai-block caution">
+        <h3>需要批判性使用的部分</h3>
+        <ul>
+          <li>AI 注释有时描述"是什么"而非"为什么"，需要手动清理</li>
+          <li>AI 倾向于加入过多防御性代码，需结合实际需求取舍</li>
+          <li>代码逻辑仍需自己逐行阅读，不能盲目复制粘贴</li>
+        </ul>
+      </div>
+      <div class="ai-block concl">
+        <h3>结论</h3>
+        <p>AI 是加速器，不是替代品。它适合生成骨架，但代码的正确性、合理性、风格一致性仍需开发者自己把关。</p>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  周家乐 · 2450411106 · 24级计算机科学与技术一班 · Python 课程作业
+</footer>
+
+</body>
+</html>
